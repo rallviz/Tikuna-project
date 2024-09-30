@@ -5,9 +5,41 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { Water } from 'three/examples/jsm/objects/Water.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 let camera, scene, renderer;
 let controls, water, sun;
+
+const loader = new GLTFLoader();
+
+class Boat {
+  constructor() {
+    loader.load('assets/boat/scene.gltf', (gltf) => {
+      scene.add(gltf.scene);
+      gltf.scene.scale.set(3, 3, 3);
+      gltf.scene.position.set(0, 0, 0); // Colocar o barco na origem
+      gltf.scene.rotation.y = Math.PI; // Para 90 graus
+    });
+  }
+}
+
+class Fishing {
+  constructor() {
+    loader.load('assets/fishing/scene.gltf', (gltf) => {
+      scene.add(gltf.scene);
+      gltf.scene.scale.set(0.01, 0.01, 0.01);
+      gltf.scene.position.set(0, 4, -13); // Colocar o barco na origem
+      gltf.scene.rotation.y = Math.PI / 2; // Para 90 graus
+      gltf.scene.rotation.z = Math.PI / 8; // Para 90 graus
+    });
+  }
+}
+
+// Instanciar o barco
+// Instanciar o barco e a vara de pescar
+const boat = new Boat();
+const fishing = new Fishing();
+
 
 init();
 animate();
@@ -23,9 +55,7 @@ function init() {
 
   scene = new THREE.Scene();
 
-  camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 1, 20000);
-  camera.position.set(30, 30, 100);
-
+  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 20000);
   sun = new THREE.Vector3();
 
   const waterGeometry = new THREE.PlaneGeometry(10000, 10000);
@@ -101,8 +131,12 @@ function init() {
   controls.minDistance = 40.0;
   controls.maxDistance = 200.0;
   controls.update();
+  controls.enableRotate = false; // Desativa a rotação
+  controls.enableZoom = false; // Desativa o zoom
+  controls.enablePan = false; // Desativa o movimento lateral
 
- 
+
+
   const waterUniforms = water.material.uniforms;
 
   window.addEventListener('resize', onWindowResize);
@@ -120,13 +154,14 @@ function onWindowResize() {
 
 function animate() {
 
-  requestAnimationFrame( animate );
+  requestAnimationFrame(animate);
   render();
+  camera.position.set(0, 5, 0); // Ajuste conforme necessário
 }
 
 function render() {
 
-  water.material.uniforms['time'].value += 1.0 / 60.0;
+  water.material.uniforms['time'].value += 0.008 / 60.0;
 
   renderer.render(scene, camera);
 
