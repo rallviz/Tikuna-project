@@ -14,9 +14,9 @@ class Boat {
   constructor() {
     loader.load('assets/boat/scene.gltf', (gltf) => {
       scene.add(gltf.scene);
-      gltf.scene.scale.set(3, 3, 3); // Define a escala do barco
-      gltf.scene.position.set(0, 0, 0); // Coloca o barco na origem
-      gltf.scene.rotation.y = Math.PI; // Rotaciona o barco 180 graus
+      gltf.scene.scale.set(3, 3, 3);
+      gltf.scene.position.set(0, 0, 0);
+      gltf.scene.rotation.y = Math.PI;
     });
   }
 }
@@ -26,10 +26,10 @@ class Fishing {
   constructor() {
     loader.load('assets/fishing/scene.gltf', (gltf) => {
       scene.add(gltf.scene);
-      gltf.scene.scale.set(0.01, 0.01, 0.01); // Define a escala da vara de pescar
-      gltf.scene.position.set(0, 4, -13); // Posição da vara de pescar
-      gltf.scene.rotation.y = Math.PI / 2; // Rotaciona a vara de pescar 90 graus
-      gltf.scene.rotation.z = Math.PI / 8; // Rotaciona a vara de pescar um pouco
+      gltf.scene.scale.set(0.01, 0.01, 0.01);
+      gltf.scene.position.set(0, 4, -13);
+      gltf.scene.rotation.y = Math.PI / 2;
+      gltf.scene.rotation.z = Math.PI / 8;
     });
   }
 }
@@ -37,9 +37,17 @@ class Fishing {
 // Instanciar o barco e a vara de pescar
 const boat = new Boat();
 const fishing = new Fishing();
+let parameters = {
+  elevation: 15,
+  azimuth: 224
+};
+const sky = new Sky();
+let renderTarget;
+const sceneEnv = new THREE.Scene();
+let pmremGenerator;// = new THREE.PMREMGenerator(renderer);
 
-init(); // Chama a função de inicialização
-animate(); // Inicia a animação
+init();
+animate();
 
 function init() {
   // Configuração do renderizador
@@ -50,11 +58,8 @@ function init() {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.5;
   document.body.appendChild(renderer.domElement);
-
-  // Criação da cena
+  pmremGenerator = new THREE.PMREMGenerator(renderer);
   scene = new THREE.Scene();
-
-  // Configuração da câmera
   camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 20000);
   sun = new THREE.Vector3();
 
@@ -83,7 +88,6 @@ function init() {
   scene.add(water); // Adiciona a água à cena
 
   // Criação do céu
-  const sky = new Sky();
   sky.scale.setScalar(50); // Escala do céu
   sky.frustumCulled = true; // Limita a renderização ao campo de visão
   scene.add(sky); // Adiciona o céu à cena
@@ -95,18 +99,16 @@ function init() {
   skyUniforms['rayleigh'].value = 2;
   skyUniforms['mieCoefficient'].value = 0.005;
   skyUniforms['mieDirectionalG'].value = 0.8;
-
-  const parameters = {
-    elevation: 2,
-    azimuth: 180
-  };
-
-  const pmremGenerator = new THREE.PMREMGenerator(renderer);
-  const sceneEnv = new THREE.Scene();
-  let renderTarget;
+  
+  /*let parameters = {
+    elevation: 0,
+    azimuth: 224
+    };*/
+    
 
   // Função para atualizar a posição do sol
-  function updateSun() {
+  /*function updateSun() {
+    parameters.elevation+= 1;
     const phi = THREE.MathUtils.degToRad(90 - parameters.elevation);
     const theta = THREE.MathUtils.degToRad(parameters.azimuth);
 
@@ -118,16 +120,35 @@ function init() {
 
     sceneEnv.add(sky);
     renderTarget = pmremGenerator.fromScene(sceneEnv);
+    scene.remove(sky);
     scene.add(sky);
     scene.environment = renderTarget.texture; // Configura o ambiente da cena
-  }
+  }*/
 
-  updateSun(); // Chama a função para atualizar o sol
+  updateSun(sky, renderTarget, sceneEnv, pmremGenerator); // Chama a função para atualizar o sol
 
   const waterUniforms = water.material.uniforms;
 
   // Evento de resize da janela
   window.addEventListener('resize', onWindowResize);
+}
+
+function updateSun(sky, renderTarget, sceneEnv, pmremGenerator) {
+  parameters.elevation+= 0.5;
+  const phi = THREE.MathUtils.degToRad(90 - parameters.elevation);
+  const theta = THREE.MathUtils.degToRad(parameters.azimuth);
+
+  sun.setFromSphericalCoords(1, phi, theta);
+  sky.material.uniforms['sunPosition'].value.copy(sun);
+  water.material.uniforms['sunDirection'].value.copy(sun).normalize();
+
+  if (renderTarget !== undefined) renderTarget.dispose();
+
+  sceneEnv.add(sky);
+  renderTarget = pmremGenerator.fromScene(sceneEnv);
+  scene.remove(sky);
+  scene.add(sky);
+  scene.environment = renderTarget.texture; // Configura o ambiente da cena
 }
 
 function onWindowResize() {
@@ -138,6 +159,8 @@ function onWindowResize() {
 }
 
 function animate() {
+  //updateSun();
+    updateSun(sky, renderTarget, sceneEnv, pmremGenerator); // Chama a função para atualizar o sol
   requestAnimationFrame(animate); // Chama a função de animação
   render(); // Renderiza a cena
   camera.position.set(0, 5, 0); // Define a posição da câmera
