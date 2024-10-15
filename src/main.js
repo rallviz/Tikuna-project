@@ -177,9 +177,11 @@ function onWindowResize() {
 }
 
 function animate() {
+  //updateSun();
   if (fishing) {
     fishing.update(); // Chama a função update da vara de pescar
-  }  requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
   render();
   camera.position.set(0, 5, 0);
 }
