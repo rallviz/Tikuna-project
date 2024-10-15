@@ -32,7 +32,32 @@ class Fishing {
       gltf.scene.position.set(0, 4, -13);
       gltf.scene.rotation.y = Math.PI / 2;
       gltf.scene.rotation.z = Math.PI / 8;
+
+      this.fishing = gltf.scene
+      this.speed = {
+        vel: 0,
+        rot: 0
+      };
+      // Novos parâmetros de animação
+      this.pullStrength = 0.03;  // Força do puxão
+      this.maxRotationX = Math.PI / 180; // Limite de inclinação
     });
+  }
+
+  stop() {
+    this.speed.vel = 0
+    this.speed.rot = 0
+  }
+  update() {
+    if (this.fishing) {
+      // Inclinação da vara simulando o puxão do peixe (limite em maxRotationX)
+      if (this.fishing.rotation.x < this.maxRotationX) {
+        this.fishing.rotation.x += this.pullStrength;
+      } else {
+        // Se atingir o limite, faz com que a vara volte à posição inicial
+        this.fishing.rotation.x -= this.pullStrength;
+      }
+    }
   }
 }
 
@@ -60,7 +85,7 @@ function init() {
 
   // Criação da geometria da água
   const waterGeometry = new THREE.PlaneGeometry(1000, 1000);
-  
+
   // Criação da água
   water = new Water(
     waterGeometry,
@@ -94,10 +119,29 @@ function init() {
   updateSun();
 
   window.addEventListener('resize', onWindowResize);
+
+  window.addEventListener('keydown', function (e) {
+    if (e.key == "ArrowUp") {
+      fishing.speed.vel = -0.03
+    }
+    if(e.key == "ArrowDown"){
+      fishing.speed.vel = 0.03
+    }
+    if(e.key == "ArrowRigth"){
+      fishing.speed.rot = -0.03
+    }
+    if(e.key == "ArrowLeft"){
+      fishing.speed.rot = 0.03
+    }
+  })
+
+  window.addEventListener('keyup', function(e){
+    fishing.stop()
+  })
 }
 
 function updateSun() {
-  
+
   if (parameters.elevation > minElevation) {
     parameters.elevation -= 0.01; // Diminui a elevação do sol
   }
@@ -125,7 +169,7 @@ function onWindowResize() {
 }
 
 function animate() {
-  updateSun();
+  fishing.update();
   requestAnimationFrame(animate);
   render();
   camera.position.set(0, 5, 0);
