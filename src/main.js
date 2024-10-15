@@ -39,9 +39,9 @@ class Fishing {
       this.isFishing = false; // Estado da animação
 
       this.setupRandomFishing(); // Inicia o sistema de pausa e fisgada aleatória
+      this.initKeyListener(); // Inicializa o listener de teclado
     });
   }
-
 
   setupRandomFishing() {
     const randomInterval = Math.random() * 3000 + 2000; // Intervalo aleatório entre 2 e 5 segundos
@@ -53,6 +53,22 @@ class Fishing {
         this.setupRandomFishing(); // Reinicia o ciclo
       }, 2000); // A vara é puxada por 2 segundos antes de parar
     }, randomInterval);
+  }
+
+  catchFish() {
+    if (this.isFishing) {
+      console.log("Peixe capturado!"); // Simulação da captura do peixe
+      this.isFishing = false; // Para a ação de fisgada após capturar
+      // Aqui você pode adicionar lógica para recompensas, animações, etc.
+    }
+  }
+
+  initKeyListener() {
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowUp') { // Verifica se a tecla pressionada é a seta para cima
+        this.catchFish(); // Tenta capturar o peixe
+      }
+    });
   }
 
   stop() {
