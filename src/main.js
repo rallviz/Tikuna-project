@@ -119,25 +119,6 @@ function init() {
   updateSun();
 
   window.addEventListener('resize', onWindowResize);
-
-  window.addEventListener('keydown', function (e) {
-    if (e.key == "ArrowUp") {
-      fishing.speed.vel = -0.03
-    }
-    if(e.key == "ArrowDown"){
-      fishing.speed.vel = 0.03
-    }
-    if(e.key == "ArrowRigth"){
-      fishing.speed.rot = -0.03
-    }
-    if(e.key == "ArrowLeft"){
-      fishing.speed.rot = 0.03
-    }
-  })
-
-  window.addEventListener('keyup', function(e){
-    fishing.stop()
-  })
 }
 
 function updateSun() {
