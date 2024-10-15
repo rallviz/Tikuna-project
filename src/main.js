@@ -34,22 +34,33 @@ class Fishing {
       gltf.scene.rotation.z = Math.PI / 8;
 
       this.fishing = gltf.scene
-      this.speed = {
-        vel: 0,
-        rot: 0
-      };
-      // Novos parâmetros de animação
       this.pullStrength = 0.03;  // Força do puxão
       this.maxRotationX = Math.PI / 180; // Limite de inclinação
+      this.isFishing = false; // Estado da animação
+
+      this.setupRandomFishing(); // Inicia o sistema de pausa e fisgada aleatória
     });
   }
 
-  stop() {
-    this.speed.vel = 0
-    this.speed.rot = 0
+
+  setupRandomFishing() {
+    const randomInterval = Math.random() * 3000 + 2000; // Intervalo aleatório entre 2 e 5 segundos
+
+    setTimeout(() => {
+      this.isFishing = true; // O peixe fisga
+      setTimeout(() => {
+        this.isFishing = false; // O peixe solta a vara após alguns segundos
+        this.setupRandomFishing(); // Reinicia o ciclo
+      }, 2000); // A vara é puxada por 2 segundos antes de parar
+    }, randomInterval);
   }
+
+  stop() {
+    this.isFishing = false; // Para a ação de fisgada
+  }
+
   update() {
-    if (this.fishing) {
+    if (this.fishing && this.isFishing) {
       // Inclinação da vara simulando o puxão do peixe (limite em maxRotationX)
       if (this.fishing.rotation.x < this.maxRotationX) {
         this.fishing.rotation.x += this.pullStrength;
@@ -150,8 +161,9 @@ function onWindowResize() {
 }
 
 function animate() {
-  fishing.update();
-  requestAnimationFrame(animate);
+  if (fishing) {
+    fishing.update(); // Chama a função update da vara de pescar
+  }  requestAnimationFrame(animate);
   render();
   camera.position.set(0, 5, 0);
 }
