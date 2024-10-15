@@ -2,3 +2,15 @@
   margin: 0;
   padding: 0;
 }
+
+#fishCounter {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 32px; /* Tamanho do texto aumentado */
+  color: black;    /* Texto preto */
+  background-color: white; /* Fundo branco */
+  padding: 10px 20px; /* Espaçamento interno */
+  border-radius: 10px; /* Bordas arredondadas */
+  z-index: 10; /* Garante que o contador fique sobre os outros elementos */
+}

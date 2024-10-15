@@ -8,8 +8,9 @@ let camera, scene, renderer, water, sun, renderTarget, pmremGenerator;
 const loader = new GLTFLoader();
 const sceneEnv = new THREE.Scene();
 let parameters = { elevation: 15, azimuth: 200 };
-const minElevation = -2; // Elevação mínima
+const minElevation = -2;
 const sky = new Sky();
+let fishCount = 0;
 
 // Classe para carregar o barco
 class Boat {
@@ -23,9 +24,49 @@ class Boat {
   }
 }
 
+// Classe para carregar e animar o peixe
+class Fish {
+  constructor() {
+    loader.load('assets/fish/scene.gltf', (gltf) => {
+      scene.add(gltf.scene);
+      gltf.scene.scale.set(2, 2, 2);
+      gltf.scene.position.set(0, 6, -5);
+      gltf.scene.rotation.y = Math.PI / 2;
+      this.fish = gltf.scene;
+      this.fish.visible = false;
+      this.isCaught = false;
+    });
+  }
+
+  showFish() {
+    if (this.fish) {
+        this.fish.visible = true; // Torna o peixe visível
+        this.fish.scale.set(0, 0, 0); // Inicia com escala 0
+        // Animação de aumento de escala
+        const animateFish = (scale, z) => {
+            if (scale < 3) { // Alvo da escala
+                this.fish.scale.set(scale, scale, scale);
+                this.fish.position.z = z; // Atualiza a posição Z do peixe
+                requestAnimationFrame(() => animateFish(scale + 0.1, z + 0.1));
+            }
+        };
+        animateFish(0, -10); // Inicia a animação a partir de -10
+        console.log("Peixe visível na tela!");
+    }
+}
+
+  hideFish() {
+    if (this.fish) {
+      this.fish.visible = false;
+      this.isCaught = false;
+      console.log("Peixe escondido na tela!");
+    }
+  }
+}
+
 // Classe para carregar a vara de pescar
 class Fishing {
-  constructor() {
+  constructor(fish) {
     loader.load('assets/fishing/scene.gltf', (gltf) => {
       scene.add(gltf.scene);
       gltf.scene.scale.set(0.01, 0.01, 0.01);
@@ -33,70 +74,69 @@ class Fishing {
       gltf.scene.rotation.y = Math.PI / 2;
       gltf.scene.rotation.z = Math.PI / 8;
 
-      this.fishing = gltf.scene
-      this.pullStrength = 0.03;  // Força do puxão
-      this.maxRotationX = Math.PI / 180; // Limite de inclinação
-      this.isFishing = false; // Estado da animação
+      this.fishing = gltf.scene;
+      this.pullStrength = 0.03;
+      this.maxRotationX = Math.PI / 180;
+      this.isFishing = false;
+      this.fish = fish;
 
-      this.setupRandomFishing(); // Inicia o sistema de pausa e fisgada aleatória
-      this.initKeyListener(); // Inicializa o listener de teclado
+      this.setupRandomFishing();
+      this.initKeyListener();
     });
   }
 
   setupRandomFishing() {
-    const randomInterval = Math.random() * 3000 + 2000; // Intervalo aleatório entre 2 e 5 segundos
+    const randomInterval = Math.random() * 3000 + 2000;
 
     setTimeout(() => {
-      this.isFishing = true; // O peixe fisga
+      this.isFishing = true;
       setTimeout(() => {
-        this.isFishing = false; // O peixe solta a vara após alguns segundos
-        this.setupRandomFishing(); // Reinicia o ciclo
-      }, 2000); // A vara é puxada por 2 segundos antes de parar
+        this.isFishing = false;
+        this.setupRandomFishing();
+      }, 2000);
     }, randomInterval);
   }
 
   catchFish() {
     if (this.isFishing) {
-      console.log("Peixe capturado!"); // Simulação da captura do peixe
-      this.isFishing = false; // Para a ação de fisgada após capturar
-      // Aqui você pode adicionar lógica para recompensas, animações, etc.
+      console.log("Peixe capturado!");
+      this.isFishing = false;
+      this.fish.showFish();
+
+      fishCount++;
+      document.getElementById('fishCounter').innerText = `Peixes capturados: ${fishCount}`;
+
+      setTimeout(() => {
+        this.fish.hideFish();
+      }, 1000);
     }
   }
 
   initKeyListener() {
     window.addEventListener('keydown', (event) => {
-      if (event.key === 'ArrowUp') { // Verifica se a tecla pressionada é a seta para cima
-        this.catchFish(); // Tenta capturar o peixe
+      if (event.key === 'ArrowUp') {
+        this.catchFish();
       }
     });
   }
 
   stop() {
-    this.isFishing = false; // Para a ação de fisgada
+    this.isFishing = false;
   }
 
   update() {
     if (this.fishing && this.isFishing) {
-      // Inclinação da vara simulando o puxão do peixe (limite em maxRotationX)
       if (this.fishing.rotation.x < this.maxRotationX) {
         this.fishing.rotation.x += this.pullStrength;
       } else {
-        // Se atingir o limite, faz com que a vara volte à posição inicial
         this.fishing.rotation.x -= this.pullStrength;
       }
     }
   }
 }
 
-// Instanciar o barco e a vara de pescar
-const boat = new Boat();
-const fishing = new Fishing();
-
-init();
-animate();
-
+// Função para inicializar a cena
 function init() {
-  // Configuração do renderizador
   renderer = new THREE.WebGLRenderer();
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -110,30 +150,23 @@ function init() {
   camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 20000);
   sun = new THREE.Vector3();
 
-  // Criação da geometria da água
   const waterGeometry = new THREE.PlaneGeometry(1000, 1000);
-
-  // Criação da água
-  water = new Water(
-    waterGeometry,
-    {
-      textureWidth: 512,
-      textureHeight: 512,
-      waterNormals: new THREE.TextureLoader().load('assets/waternormals.jpg', (texture) => {
-        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-      }),
-      sunDirection: new THREE.Vector3(),
-      sunColor: 0xffffff,
-      waterColor: 0x001e0f,
-      distortionScale: 3.7,
-      fog: scene.fog !== undefined
-    }
-  );
+  water = new Water(waterGeometry, {
+    textureWidth: 512,
+    textureHeight: 512,
+    waterNormals: new THREE.TextureLoader().load('assets/waternormals.jpg', (texture) => {
+      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    }),
+    sunDirection: new THREE.Vector3(),
+    sunColor: 0xffffff,
+    waterColor: 0x001e0f,
+    distortionScale: 3.7,
+    fog: scene.fog !== undefined
+  });
 
   water.rotation.x = -Math.PI / 2;
   scene.add(water);
 
-  // Criação do céu
   sky.scale.setScalar(50);
   scene.add(sky);
 
@@ -144,14 +177,13 @@ function init() {
   skyUniforms['mieDirectionalG'].value = 0.8;
 
   updateSun();
-
   window.addEventListener('resize', onWindowResize);
 }
 
+// Função para atualizar a posição do sol
 function updateSun() {
-
   if (parameters.elevation > minElevation) {
-    parameters.elevation -= 0.01; // Diminui a elevação do sol
+    parameters.elevation -= 0.008;
   }
 
   const phi = THREE.MathUtils.degToRad(90 - parameters.elevation);
@@ -170,23 +202,35 @@ function updateSun() {
   scene.environment = renderTarget.texture;
 }
 
+// Função para tratar o redimensionamento da janela
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+// Função para animação
 function animate() {
-  //updateSun();
+  updateSun();
   if (fishing) {
-    fishing.update(); // Chama a função update da vara de pescar
+    fishing.update();
   }
+
   requestAnimationFrame(animate);
   render();
   camera.position.set(0, 5, 0);
 }
 
+// Função de renderização
 function render() {
   water.material.uniforms['time'].value += 0.008 / 60.0;
   renderer.render(scene, camera);
 }
+
+// Instanciar o barco, o peixe e a vara de pescar
+const boat = new Boat();
+const fish = new Fish();
+const fishing = new Fishing(fish);
+
+init();
+animate();
