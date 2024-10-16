@@ -14,3 +14,11 @@
   border-radius: 10px; /* Bordas arredondadas */
   z-index: 10; /* Garante que o contador fique sobre os outros elementos */
 }
+
+#sunsetMessage{
+  
+  background-color: black; /* Fundo branco */
+  padding: 10px 20px; /* Espaçamento interno */
+  border-radius: 10px; /* Bordas arredondadas */
+  z-index: 10; /* Garante que o contador fique sobre os outros elementos */
+}

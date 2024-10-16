@@ -40,20 +40,20 @@ class Fish {
 
   showFish() {
     if (this.fish) {
-        this.fish.visible = true; // Torna o peixe visível
-        this.fish.scale.set(0, 0, 0); // Inicia com escala 0
-        // Animação de aumento de escala
-        const animateFish = (scale, z) => {
-            if (scale < 3) { // Alvo da escala
-                this.fish.scale.set(scale, scale, scale);
-                this.fish.position.z = z; // Atualiza a posição Z do peixe
-                requestAnimationFrame(() => animateFish(scale + 0.1, z + 0.1));
-            }
-        };
-        animateFish(0, -10); // Inicia a animação a partir de -10
-        console.log("Peixe visível na tela!");
+      this.fish.visible = true; // Torna o peixe visível
+      this.fish.scale.set(0, 0, 0); // Inicia com escala 0
+      // Animação de aumento de escala
+      const animateFish = (scale, z) => {
+        if (scale < 3) { // Alvo da escala
+          this.fish.scale.set(scale, scale, scale);
+          this.fish.position.z = z; // Atualiza a posição Z do peixe
+          requestAnimationFrame(() => animateFish(scale + 0.1, z + 0.1));
+        }
+      };
+      animateFish(0, -10); // Inicia a animação a partir de -10
+      console.log("Peixe visível na tela!");
     }
-}
+  }
 
   hideFish() {
     if (this.fish) {
@@ -68,22 +68,30 @@ class Fish {
 class Fishing {
   constructor(fish) {
     loader.load('assets/fishing/scene.gltf', (gltf) => {
-      scene.add(gltf.scene);
-      gltf.scene.scale.set(0.01, 0.01, 0.01);
-      gltf.scene.position.set(0, 4, -13);
-      gltf.scene.rotation.y = Math.PI / 2;
-      gltf.scene.rotation.z = Math.PI / 8;
+      // Criando um grupo para definir o pivô de rotação
+      this.fishingGroup = new THREE.Group();
+      scene.add(this.fishingGroup);
 
+      // Adicionando a vara ao grupo
       this.fishing = gltf.scene;
+      this.fishing.scale.set(0.01, 0.01, 0.01);
+      this.fishing.position.set(0, 4, -13);
+      this.fishing.rotation.y = Math.PI / 2;
+      this.fishing.rotation.z = Math.PI / 8;
+
+      this.fishingGroup.add(this.fishing);
+
       this.pullStrength = 0.03;
       this.maxRotationX = Math.PI / 180;
+      this.maxTiltAngle = Math.PI / 6; // Ângulo máximo de 15 graus (para esquerda/direita)
+      this.currentTiltAngle = 0;
       this.isFishing = false;
       this.fish = fish;
 
       this.setupRandomFishing();
       this.initKeyListener();
     });
-  }
+  } 
 
   setupRandomFishing() {
     const randomInterval = Math.random() * 3000 + 2000;
@@ -114,8 +122,25 @@ class Fishing {
 
   initKeyListener() {
     window.addEventListener('keydown', (event) => {
+      // Controle de pegar peixe (tecla para cima)
       if (event.key === 'ArrowUp') {
         this.catchFish();
+      }
+
+      // Controle de inclinação para a esquerda (tecla para esquerda)
+      if (event.key === 'ArrowLeft') {
+        if (this.currentTiltAngle > -this.maxTiltAngle) {
+          this.fishingGroup.rotation.z += Math.PI / 180; // Inclina a ponta para a esquerda
+          this.currentTiltAngle -= Math.PI / 180;
+        }
+      }
+
+      // Controle de inclinação para a direita (tecla para direita)
+      if (event.key === 'ArrowRight') {
+        if (this.currentTiltAngle < this.maxTiltAngle) {
+          this.fishingGroup.rotation.z -= Math.PI / 180; // Inclina a ponta para a direita
+          this.currentTiltAngle += Math.PI / 180;
+        }
       }
     });
   }
@@ -150,10 +175,10 @@ function init() {
   camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 20000);
   sun = new THREE.Vector3();
 
-  const waterGeometry = new THREE.PlaneGeometry(1000, 1000);
+  const waterGeometry = new THREE.PlaneGeometry(400, 1000);
   water = new Water(waterGeometry, {
-    textureWidth: 512,
-    textureHeight: 512,
+    textureWidth: 80,
+    textureHeight: 80,
     waterNormals: new THREE.TextureLoader().load('assets/waternormals.jpg', (texture) => {
       texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
     }),
@@ -167,11 +192,11 @@ function init() {
   water.rotation.x = -Math.PI / 2;
   scene.add(water);
 
-  sky.scale.setScalar(50);
+  sky.scale.setScalar(20);
   scene.add(sky);
 
   const skyUniforms = sky.material.uniforms;
-  skyUniforms['turbidity'].value = 10;
+  skyUniforms['turbidity'].value = 6;
   skyUniforms['rayleigh'].value = 2;
   skyUniforms['mieCoefficient'].value = 0.005;
   skyUniforms['mieDirectionalG'].value = 0.8;
@@ -183,7 +208,7 @@ function init() {
 // Função para atualizar a posição do sol
 function updateSun() {
   if (parameters.elevation > minElevation) {
-      parameters.elevation -= 0.006;
+    parameters.elevation -= 0.0018;
   }
 
   const phi = THREE.MathUtils.degToRad(90 - parameters.elevation);
@@ -194,6 +219,11 @@ function updateSun() {
   water.material.uniforms['sunDirection'].value.copy(sun).normalize();
 
   if (renderTarget !== undefined) renderTarget.dispose();
+
+  const sunsetMessage = document.getElementById('sunsetMessage');
+  if (parameters.elevation <= -2) {
+    sunsetMessage.style.display = 'block'; // Mostra a mensagem
+  }
 
   sceneEnv.add(sky);
   renderTarget = pmremGenerator.fromScene(sceneEnv);
