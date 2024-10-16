@@ -7,7 +7,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 let camera, scene, renderer, water, sun, renderTarget, pmremGenerator;
 const loader = new GLTFLoader();
 const sceneEnv = new THREE.Scene();
-let parameters = { elevation: 15, azimuth: 200 };
+let parameters = { elevation: 6, azimuth: 200 };
 const minElevation = -2;
 const sky = new Sky();
 let fishCount = 0;
@@ -158,8 +158,8 @@ function init() {
       texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
     }),
     sunDirection: new THREE.Vector3(),
-    sunColor: 0xffffff,
-    waterColor: 0x001e0f,
+    sunColor: 0xff0000,
+    waterColor: 0x1FB899,
     distortionScale: 3.7,
     fog: scene.fog !== undefined
   });
@@ -183,7 +183,7 @@ function init() {
 // Função para atualizar a posição do sol
 function updateSun() {
   if (parameters.elevation > minElevation) {
-    parameters.elevation -= 0.008;
+      parameters.elevation -= 0.006;
   }
 
   const phi = THREE.MathUtils.degToRad(90 - parameters.elevation);
