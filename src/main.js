@@ -6,6 +6,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 let camera, scene, renderer, water, sun, renderTarget, pmremGenerator;
 const loader = new GLTFLoader();
+const textureLoader = new THREE.TextureLoader();
 const sceneEnv = new THREE.Scene();
 let parameters = { elevation: 6, azimuth: 200 };
 const minElevation = -2;
@@ -40,13 +41,13 @@ class Fish {
 
   showFish() {
     if (this.fish) {
-      this.fish.visible = true; // Torna o peixe visível
-      this.fish.scale.set(0, 0, 0); // Inicia com escala 0
+      this.fish.visible = true;
+      this.fish.scale.set(0, 0, 0);
       // Animação de aumento de escala
       const animateFish = (scale, z) => {
-        if (scale < 3) { // Alvo da escala
+        if (scale < 3) {
           this.fish.scale.set(scale, scale, scale);
-          this.fish.position.z = z; // Atualiza a posição Z do peixe
+          this.fish.position.z = z;
           requestAnimationFrame(() => animateFish(scale + 0.1, z + 0.1));
         }
       };
@@ -58,7 +59,6 @@ class Fish {
   hideFish() {
     if (this.fish) {
       this.fish.visible = false;
-      this.isCaught = false;
       console.log("Peixe escondido na tela!");
     }
   }
@@ -91,11 +91,10 @@ class Fishing {
       this.setupRandomFishing();
       this.initKeyListener();
     });
-  } 
+  }
 
   setupRandomFishing() {
     const randomInterval = Math.random() * 3000 + 2000;
-
     setTimeout(() => {
       this.isFishing = true;
       setTimeout(() => {
@@ -145,10 +144,6 @@ class Fishing {
     });
   }
 
-  stop() {
-    this.isFishing = false;
-  }
-
   update() {
     if (this.fishing && this.isFishing) {
       if (this.fishing.rotation.x < this.maxRotationX) {
@@ -162,7 +157,7 @@ class Fishing {
 
 // Função para inicializar a cena
 function init() {
-  renderer = new THREE.WebGLRenderer();
+  renderer = new THREE.WebGLRenderer(); //renderizar a cena 3D usando a API WebGL
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setAnimationLoop(animate);
@@ -170,7 +165,7 @@ function init() {
   renderer.toneMappingExposure = 0.5;
   document.body.appendChild(renderer.domElement);
 
-  pmremGenerator = new THREE.PMREMGenerator(renderer);
+  pmremGenerator = new THREE.PMREMGenerator(renderer); //reflexos realistas
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 20000);
   sun = new THREE.Vector3();
@@ -179,10 +174,10 @@ function init() {
   water = new Water(waterGeometry, {
     textureWidth: 80,
     textureHeight: 80,
-    waterNormals: new THREE.TextureLoader().load('assets/waternormals.jpg', (texture) => {
+    waterNormals: textureLoader.load('assets/waternormals.jpg', (texture) => {
       texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
     }),
-    sunDirection: new THREE.Vector3(),
+    sunDirection: new THREE.Vector3(), //vetor tridimensional
     sunColor: 0xff0000,
     waterColor: 0x1FB899,
     distortionScale: 3.7,
@@ -196,10 +191,10 @@ function init() {
   scene.add(sky);
 
   const skyUniforms = sky.material.uniforms;
-  skyUniforms['turbidity'].value = 6;
-  skyUniforms['rayleigh'].value = 2;
-  skyUniforms['mieCoefficient'].value = 0.005;
-  skyUniforms['mieDirectionalG'].value = 0.8;
+  skyUniforms['turbidity'].value = 6; //turvação 
+  skyUniforms['rayleigh'].value = 2; //dispersão 
+  skyUniforms['mieCoefficient'].value = 0.005; //dispersão 
+  skyUniforms['mieDirectionalG'].value = 0.8; //direção da dispersão
 
   updateSun();
   window.addEventListener('resize', onWindowResize);
@@ -211,10 +206,10 @@ function updateSun() {
     parameters.elevation -= 0.0018;
   }
 
-  const phi = THREE.MathUtils.degToRad(90 - parameters.elevation);
-  const theta = THREE.MathUtils.degToRad(parameters.azimuth);
+  const phi = THREE.MathUtils.degToRad(90 - parameters.elevation); //elevação do sol acima do horizonte
+  const theta = THREE.MathUtils.degToRad(parameters.azimuth); //sol no plano horizontal
 
-  sun.setFromSphericalCoords(1, phi, theta);
+  sun.setFromSphericalCoords(1, phi, theta); //converter as coordenadas esféricas em coordenadas cartesianas
   sky.material.uniforms['sunPosition'].value.copy(sun);
   water.material.uniforms['sunDirection'].value.copy(sun).normalize();
 
@@ -241,12 +236,11 @@ function onWindowResize() {
 
 // Função para animação
 function animate() {
+  requestAnimationFrame(animate);
   updateSun();
   if (fishing) {
     fishing.update();
   }
-
-  requestAnimationFrame(animate);
   render();
   camera.position.set(0, 5, 0);
 }
