@@ -3,157 +3,21 @@ import * as THREE from 'three';
 import { Water } from 'three/examples/jsm/objects/Water.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { Boat } from './models/Boat';
+import { Fish } from './models/Fish';
+import { Bunny } from './models/Bunny';
+import { Fishing } from './models/Fishing';
 
 let camera, scene, renderer, water, sun, renderTarget, pmremGenerator;
+scene = new THREE.Scene();
 const loader = new GLTFLoader();
 const textureLoader = new THREE.TextureLoader();
 const sceneEnv = new THREE.Scene();
 let parameters = { elevation: 6, azimuth: 200 };
-const minElevation = -2;
 const sky = new Sky();
-let fishCount = 0;
-
-// Classe para carregar o barco
-class Boat {
-  constructor() {
-    loader.load('assets/boat/scene.gltf', (gltf) => {
-      scene.add(gltf.scene);
-      gltf.scene.scale.set(3, 3, 3);
-      gltf.scene.position.set(0, 0, 0);
-      gltf.scene.rotation.y = Math.PI;
-    });
-  }
-}
-
-// Classe para carregar e animar o peixe
-class Fish {
-  constructor() {
-    loader.load('assets/fish/scene.gltf', (gltf) => {
-      scene.add(gltf.scene);
-      gltf.scene.scale.set(2, 2, 2);
-      gltf.scene.position.set(0, 6, -5);
-      gltf.scene.rotation.y = Math.PI / 2;
-      this.fish = gltf.scene;
-      this.fish.visible = false;
-      this.isCaught = false;
-    });
-  }
-
-  showFish() {
-    if (this.fish) {
-      this.fish.visible = true;
-      this.fish.scale.set(0, 0, 0);
-      // Animação de aumento de escala
-      const animateFish = (scale, z) => {
-        if (scale < 3) {
-          this.fish.scale.set(scale, scale, scale);
-          this.fish.position.z = z;
-          requestAnimationFrame(() => animateFish(scale + 0.1, z + 0.1));
-        }
-      };
-      animateFish(0, -10); // Inicia a animação a partir de -10
-      console.log("Peixe visível na tela!");
-    }
-  }
-
-  hideFish() {
-    if (this.fish) {
-      this.fish.visible = false;
-      console.log("Peixe escondido na tela!");
-    }
-  }
-}
-
-// Classe para carregar a vara de pescar
-class Fishing {
-  constructor(fish) {
-    loader.load('assets/fishing/scene.gltf', (gltf) => {
-      // Criando um grupo para definir o pivô de rotação
-      this.fishingGroup = new THREE.Group();
-      scene.add(this.fishingGroup);
-
-      // Adicionando a vara ao grupo
-      this.fishing = gltf.scene;
-      this.fishing.scale.set(0.01, 0.01, 0.01);
-      this.fishing.position.set(0, 4, -13);
-      this.fishing.rotation.y = Math.PI / 2;
-      this.fishing.rotation.z = Math.PI / 8;
-
-      this.fishingGroup.add(this.fishing);
-
-      this.pullStrength = 0.03;
-      this.maxRotationX = Math.PI / 180;
-      this.maxTiltAngle = Math.PI / 6; // Ângulo máximo de 15 graus (para esquerda/direita)
-      this.currentTiltAngle = 0;
-      this.isFishing = false;
-      this.fish = fish;
-
-      this.setupRandomFishing();
-      this.initKeyListener();
-    });
-  }
-
-  setupRandomFishing() {
-    const randomInterval = Math.random() * 3000 + 2000;
-    setTimeout(() => {
-      this.isFishing = true;
-      setTimeout(() => {
-        this.isFishing = false;
-        this.setupRandomFishing();
-      }, 2000);
-    }, randomInterval);
-  }
-
-  catchFish() {
-    if (this.isFishing) {
-      console.log("Peixe capturado!");
-      this.isFishing = false;
-      this.fish.showFish();
-
-      fishCount++;
-      document.getElementById('fishCounter').innerText = `Peixes capturados: ${fishCount}`;
-
-      setTimeout(() => {
-        this.fish.hideFish();
-      }, 1000);
-    }
-  }
-
-  initKeyListener() {
-    window.addEventListener('keydown', (event) => {
-      // Controle de pegar peixe (tecla para cima)
-      if (event.key === 'ArrowUp') {
-        this.catchFish();
-      }
-
-      // Controle de inclinação para a esquerda (tecla para esquerda)
-      if (event.key === 'ArrowLeft') {
-        if (this.currentTiltAngle > -this.maxTiltAngle) {
-          this.fishingGroup.rotation.z += Math.PI / 180; // Inclina a ponta para a esquerda
-          this.currentTiltAngle -= Math.PI / 180;
-        }
-      }
-
-      // Controle de inclinação para a direita (tecla para direita)
-      if (event.key === 'ArrowRight') {
-        if (this.currentTiltAngle < this.maxTiltAngle) {
-          this.fishingGroup.rotation.z -= Math.PI / 180; // Inclina a ponta para a direita
-          this.currentTiltAngle += Math.PI / 180;
-        }
-      }
-    });
-  }
-
-  update() {
-    if (this.fishing && this.isFishing) {
-      if (this.fishing.rotation.x < this.maxRotationX) {
-        this.fishing.rotation.x += this.pullStrength;
-      } else {
-        this.fishing.rotation.x -= this.pullStrength;
-      }
-    }
-  }
-}
+const minElevation = -2;
+camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 20000);
+camera.position.set(0, 5, -3);  // Posição original (ou qualquer uma que você queira)
 
 // Função para inicializar a cena
 function init() {
@@ -166,11 +30,9 @@ function init() {
   document.body.appendChild(renderer.domElement);
 
   pmremGenerator = new THREE.PMREMGenerator(renderer); //reflexos realistas
-  scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 20000);
   sun = new THREE.Vector3();
 
-  const waterGeometry = new THREE.PlaneGeometry(400, 1000);
+  const waterGeometry = new THREE.PlaneGeometry(10000, 10000);
   water = new Water(waterGeometry, {
     textureWidth: 80,
     textureHeight: 80,
@@ -187,7 +49,7 @@ function init() {
   water.rotation.x = -Math.PI / 2;
   scene.add(water);
 
-  sky.scale.setScalar(20);
+  sky.scale.setScalar(300);
   scene.add(sky);
 
   const skyUniforms = sky.material.uniforms;
@@ -235,14 +97,15 @@ function onWindowResize() {
 }
 
 // Função para animação
+// Função para animação
 function animate() {
+  //updateSun();
   requestAnimationFrame(animate);
-  updateSun();
   if (fishing) {
     fishing.update();
   }
+
   render();
-  camera.position.set(0, 5, 0);
 }
 
 // Função de renderização
@@ -252,9 +115,11 @@ function render() {
 }
 
 // Instanciar o barco, o peixe e a vara de pescar
-const boat = new Boat();
-const fish = new Fish();
-const fishing = new Fishing(fish);
+const boat = new Boat(scene); // Passa a cena aqui
+const bunny = new Bunny(scene);
+const fish = new Fish(scene);
+const fishing = new Fishing(scene, fish);
+fishing.initKeyListener(camera);
 
 init();
 animate();
