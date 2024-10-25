@@ -6,7 +6,7 @@ let fishCount = 0;
 const loader = new GLTFLoader();
 
 export class Fishing {
-  constructor(scene, fish, camera){
+  constructor(scene, fish, camera) {
     loader.load('assets/fishing/scene.gltf', (gltf) => {
       // Criando um grupo para definir o pivô de rotação
       this.camera = camera;
@@ -50,8 +50,10 @@ export class Fishing {
       this.isFishing = false;
       this.fish.showFish();
 
-      fishCount++;
-      document.getElementById('fishCounter').innerText = `Peixes capturados: ${fishCount}`;
+      const fishIcon = document.createElement('span');
+      fishIcon.className = 'fish-icon'; // Adicionando a classe para o tamanho do ícone
+      fishIcon.innerText = '🐟'; // Ou use o emoji do peixe
+      document.getElementById('fishIcons').appendChild(fishIcon);
 
       setTimeout(() => {
         this.fish.hideFish();

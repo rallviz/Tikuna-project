@@ -3,17 +3,42 @@
   padding: 0;
 }
 
+
+@font-face {
+  font-family: 'Warungasem';
+  src: url('./assets/fonts/Warungasem.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 #fishCounter {
+  font-family: 'Warungasem', sans-serif; /* Usar a fonte Warungasem */
   position: absolute;
   top: 20px;
   left: 20px;
-  font-size: 32px; /* Tamanho do texto aumentado */
-  color: black;    /* Texto preto */
-  background-color: white; /* Fundo branco */
+  font-size: 40px; /* Tamanho do texto aumentado (exemplo: 40px) */
+  color: #015c92; /* Texto preto */
+  background-color: #BCE6FF; /* Fundo alterado */
   padding: 10px 20px; /* Espaçamento interno */
   border-radius: 10px; /* Bordas arredondadas */
   z-index: 10; /* Garante que o contador fique sobre os outros elementos */
+  border: 2px solid #015c92; /* Stroke (borda) da caixa */
+  display: flex; /* Usar flexbox para alinhar texto e ícones */
+  flex-direction: column; /* Alinha o texto e os ícones verticalmente */
+  align-items: center; /* Centraliza horizontalmente */
 }
+
+#fishIcons {
+  display: flex; /* Usar flexbox para os ícones */
+  margin-top: -3px; /* Reduzido o espaço acima dos ícones */
+  align-items: center; /* Alinha verticalmente os ícones */
+}
+
+.fish-icon {
+  font-size: 24px; /* Tamanho do ícone de peixe (exemplo: 24px) */
+}
+
+
 
 #sunsetMessage{
   
