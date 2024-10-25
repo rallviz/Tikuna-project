@@ -118,8 +118,7 @@ function render() {
 const boat = new Boat(scene); // Passa a cena aqui
 const bunny = new Bunny(scene);
 const fish = new Fish(scene);
-const fishing = new Fishing(scene, fish);
-fishing.initKeyListener(camera);
+const fishing = new Fishing(scene, fish, camera);
 
 init();
 animate();
