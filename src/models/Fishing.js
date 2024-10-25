@@ -83,7 +83,7 @@ export class Fishing {
       }
 
       if (event.key === ' ') {
-        toggleCameraView(this.camera);  // Use a propriedade `this.camera`
+        toggleCameraView(this.camera);
       }
 
     });
@@ -100,16 +100,16 @@ export class Fishing {
   }
 }
 
-function toggleCameraView(camera) {
+function toggleCameraView(camera) { //sera que eh esse parametro?
   if (!camera) {
     console.error("Camera is not defined");
     return;
   }
   if (cameraView) {
-    // Mudar para a primeira posição de câmera
-    camera.position.set(0, 5, -3);  // Posição original (ou qualquer uma que você queira)
+    // Primeira posição de câmera
+    camera.position.set(0, 5, -3);
   } else {
-    // Mudar para a segunda posição de câmera
+    // Segunda posição de câmera
     camera.position.set(0, 9, 22);
   }
   cameraView = !cameraView;
